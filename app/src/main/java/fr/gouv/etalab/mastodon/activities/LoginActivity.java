@@ -71,7 +71,7 @@ public class LoginActivity extends BaseActivity {
     private EditText login_uid;
     private EditText login_passwd;
     boolean isLoadingInstance = false;
-
+    boolean canRetrieveClientId = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -203,8 +203,11 @@ public class LoginActivity extends BaseActivity {
             login_two_step.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    client_id_for_webview = true;
-                    retrievesClientId();
+                    if( canRetrieveClientId ) {
+                        canRetrieveClientId = false;
+                        client_id_for_webview = true;
+                        retrievesClientId();
+                    }
                 }
             });
 
@@ -214,6 +217,7 @@ public class LoginActivity extends BaseActivity {
                     connectionButton.setEnabled(false);
                     login_two_step.setVisibility(View.INVISIBLE);
                     TextInputLayout login_instance_layout = findViewById(R.id.login_instance_layout);
+                    canRetrieveClientId = true;
                     if (!hasFocus) {
                         retrievesClientId();
                         if (login_instance.getText() == null || login_instance.getText().toString().length() == 0) {
@@ -255,16 +259,6 @@ public class LoginActivity extends BaseActivity {
         }
     }
 
-    @Override
-    protected void onResume(){
-        super.onResume();
-        Button connectionButton = findViewById(R.id.login_button);
-        if (login_instance != null &&login_instance.getText() != null && login_instance.getText().toString().length() > 0 && client_id_for_webview) {
-            connectionButton.setEnabled(false);
-            client_id_for_webview = false;
-            retrievesClientId();
-        }
-    }
 
     private void retrievesClientId(){
         final Button connectionButton = findViewById(R.id.login_button);
@@ -311,12 +305,14 @@ public class LoginActivity extends BaseActivity {
                                       String url = redirectUserToAuthorizeAndLogin(client_id, instance);
                                       Helper.openBrowser(LoginActivity.this, url);
                                   }
+                                  canRetrieveClientId = true;
                               }
-                          } catch (JSONException ignored) {ignored.printStackTrace();}
+                          } catch (JSONException ignored) {canRetrieveClientId = true;}
                       }
                     });
                 } catch (final Exception e) {
                     e.printStackTrace();
+                    canRetrieveClientId = true;
                     runOnUiThread(new Runnable() {
                         public void run() {
                             String message;
